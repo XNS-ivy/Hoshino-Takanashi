@@ -1,0 +1,30 @@
+{
+  "name": "hoshino-takanashi",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "whatsapp-bot"
+  ],
+  "homepage": "https://github.com/XNS-ivy/Hoshino-Takanashi#readme",
+  "bugs": {
+    "url": "https://github.com/XNS-ivy/Hoshino-Takanashi/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XNS-ivy/Hoshino-Takanashi.git"
+  },
+  "license": "MIT",
+  "author": "XNS-ivy",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "baileys": "^6.7.16",
+    "dotenv": "^16.4.7",
+    "node-cache": "^5.1.2",
+    "qrcode": "^1.5.4"
+  }
+}
