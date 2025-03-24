@@ -9,19 +9,23 @@ configDotenv()
 
 const groupCache = new NodeCache()
 const authDirectoryName = process.env.WAAuth
+
 export default async function startBaileys() {
     const { state, saveCreds } = await useMultiFileAuthState(authDirectoryName)
     const sock = makeWASocket({
         auth: state,
         logger: p({ level: "silent" }),
-        browser: Browsers.macOS("Desktop"),
-        cachedGroupMetadata: async (jid) => groupCache.get(jid),
+        browser: Browsers.baileys('Hoshino'),
+        cachedGroupMetadata: jid => groupCache.get(jid),
     })
+
     sock.ev.on('creds.update', saveCreds)
-    sock.ev.on("connection.update", async (update) => {
-        await connectionState(update, sock)
-    })
-    sock.ev.on('messages.upsert', async (msg) => {
-        await chatParse(msg)
+    sock.ev.on("connection.update", update => connectionState(update, sock))
+    sock.ev.on('messages.upsert', async msg => {
+        try {
+            console.log(await chatParse(msg))
+        } catch (err) {
+            console.error("Error parsing message:", err)
+        }
     })
 }

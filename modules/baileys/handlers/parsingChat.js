@@ -1,39 +1,58 @@
-export default async function chatParse(msg = Object) {
-    if (!msg.messages) return
+export default async function chatParse(msg = {}) {
+    if (!Array.isArray(msg.messages) || msg.messages.length === 0) return null
 
-    const parse = msg.messages
-        .map(m => {
-            const message = m.message || {};
-            const msgKeys = Object.keys(message).filter(key =>
-                key !== "messageContextInfo" &&
-                key !== "senderKeyDistributionMessage" &&
-                key !== "protocolMessage"
-            )
+    let result = null
 
-            if (msgKeys.length === 0) return null
-            const msgType = msgKeys[0]
-            const validMessage = message[msgType]
-            const mediaMessage = message.imageMessage || message.videoMessage || message.documentMessage || null
-            const caption = mediaMessage?.caption || ""
+    for (const m of msg.messages) {
+        const message = m.message || {}
+        const msgKeys = Object.keys(message).filter(key =>
+            !["messageContextInfo", "senderKeyDistributionMessage", "protocolMessage"].includes(key)
+        )
 
-            const textContent = msgType === "conversation" 
-                ? validMessage 
-                : validMessage?.text || caption || ""
+        if (msgKeys.length === 0) continue
 
-            return {
-                key: m.key,
-                messageTimestamp: m.messageTimestamp,
-                pushName: m.pushName,
-                broadcast: m.broadcast,
-                type: msgType,
-                text: textContent,
-                contextInfo: validMessage?.contextInfo || mediaMessage?.contextInfo || null
-            };
-        })
-        .filter(m => m !== null)
-        .flat()
+        const msgType = msgKeys[0]
+        const validMessage = message[msgType]
+        const mediaMessage = message.imageMessage || message.videoMessage || message.documentMessage || null
+        const caption = mediaMessage?.caption || ""
 
-    if (parse.length > 0) {
-        console.log(parse)
+        const textContent = msgType === "conversation"
+            ? validMessage
+            : validMessage?.text || caption || ""
+
+        const contextInfo = validMessage?.contextInfo || mediaMessage?.contextInfo || null
+        const quoted = contextInfo?.quotedMessage || null
+        let quotedData = null
+
+        if (quoted) {
+            const quotedKeys = Object.keys(quoted)
+            const quotedType = quotedKeys.length > 0 ? quotedKeys[0] : null
+            const quotedContent = quoted[quotedType] || {}
+
+            quotedData = {
+                id: contextInfo?.stanzaId || null,
+                remoteJid: m.key.remoteJid || null,
+                participant: contextInfo?.participant || null,
+                pushName: m.pushName || null,
+                text: quotedType === "conversation"
+                    ? quotedContent
+                    : quotedContent?.text || quotedContent?.caption || "",
+                type: quotedType || null
+            }
+        }
+
+        result = {
+            id: m.key.id,
+            remoteJid: m.key.remoteJid,
+            participant: m.key.participant,
+            pushName: m.pushName,
+            text: textContent,
+            type: msgType,
+            dissapearChat: contextInfo?.expiration || 0,
+            quotedMessage: quotedData,
+            rawMessageObject: m
+        }
     }
+
+    return result
 }
