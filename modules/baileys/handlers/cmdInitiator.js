@@ -1,16 +1,17 @@
 import { configDotenv } from "dotenv"
 configDotenv()
-/**
- * On Going Project
- * @param {*} msg 
- * @returns 
- */
-export default async function initCommand(msg = {}) {
-    const isHitCommand = {}
+const prefix = process.env.prefix
+
+export default async function initCommand(msg = '') {
+    const args = msg?.trim().split(/\s+/)
+    const commandName = args.shift()
+    const isHitCommand = commandName?.startsWith(prefix)
+
     if (isHitCommand) {
         return {
-            msg,
             commandName,
+            subCommand: args[0] || null,
+            arguments: args.slice(1),
         }
     } else {
         return false
