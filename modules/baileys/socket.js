@@ -4,16 +4,18 @@ import { configDotenv } from "dotenv"
 import chatParse from './handlers/parsingChat.js'
 import connectionState from "./handlers/connectionState.js"
 import initCommand from "./handlers/cmdInitiator.js"
+import loadCommands from "./loadCommands.js"
 
 configDotenv()
 
 const authDirectoryName = process.env.WAAuth
+const commands = await loadCommands()
 
 export default async function startBaileys() {
     const { state, saveCreds } = await useMultiFileAuthState(authDirectoryName)
     const sock = makeWASocket({
         auth: state,
-        logger: p({ level: "info" }),
+        logger: p({ level: "silent" }),
         browser: ["Hoshino", "1.0.0", "Linux"],
         syncDisplayName: true,
         shouldSyncHistoryMessage: false,
@@ -27,14 +29,12 @@ export default async function startBaileys() {
     sock.ev.on('messages.upsert', async msg => {
         try {
             var messageBody = await chatParse(msg)
-            await initCommand(messageBody?.text).then(command => {
-                if (command == false) return
-                else {
-                    console.log(command)
-                }
-            })
+            const command = await initCommand(messageBody?.text)
+            if (!command) return
+            if (!commands[command.commandName]) return
+            await commands[command.commandName].execute(messageBody, sock)
         } catch (err) {
             console.error("Error parsing message:", err)
         }
-    })
+    })    
 }

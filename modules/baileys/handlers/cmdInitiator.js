@@ -1,4 +1,5 @@
 import { configDotenv } from "dotenv"
+
 configDotenv()
 const prefix = process.env.prefix
 
@@ -9,7 +10,7 @@ export default async function initCommand(msg = '') {
 
     if (isHitCommand) {
         return {
-            commandName,
+            commandName: commandName.slice(prefix.length),
             subCommand: args[0] || null,
             arguments: args.slice(1),
         }
